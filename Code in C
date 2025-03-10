@@ -1,0 +1,113 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "triangles.h"
+
+int main() {
+    Triangle *triangles = NULL;
+    Sides *sides = NULL;
+    int numTriangles = 0;
+
+    // Input
+    numTriangles = readTrianglesFromFile("input.txt", &triangles, &numTriangles);
+
+    // Process
+    if (numTriangles > 0) {
+        calculateSideLengths(triangles, numTriangles, &sides);
+        outputSimilarTriangles(triangles, numTriangles, sides, "output.txt");
+        freeMemory(triangles, sides);
+    }
+
+    //Output.
+    return 0;
+}
+
+// Function Implementations
+
+double distance(double x1, double y1, double x2, double y2) {
+    return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+}
+
+int readTrianglesFromFile(const char *filename, Triangle **triangles, int *numTriangles) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Error opening file");
+        return 0;
+    }
+
+    *numTriangles = 0;
+    int capacity = 10;
+    *triangles = (Triangle *)malloc(capacity * sizeof(Triangle));
+
+    if (*triangles == NULL) {
+        perror("Memory allocation failed");
+        fclose(file);
+        return 0;
+    }
+
+    while (fscanf(file, "%lf %lf %lf %lf %lf %lf",
+                  &(*triangles)[*numTriangles].x1, &(*triangles)[*numTriangles].y1,
+                  &(*triangles)[*numTriangles].x2, &(*triangles)[*numTriangles].y2,
+                  &(*triangles)[*numTriangles].x3, &(*triangles)[*numTriangles].y3) == 6) {
+        (*numTriangles)++;
+        if (*numTriangles >= capacity) {
+            capacity *= 2;
+            *triangles = (Triangle *)realloc(*triangles, capacity * sizeof(Triangle));
+            if (*triangles == NULL) {
+                perror("Memory reallocation failed");
+                fclose(file);
+                return 0;
+            }
+        }
+    }
+
+    fclose(file);
+    return *numTriangles;
+}
+
+void calculateSideLengths(Triangle *triangles, int numTriangles, Sides **sides) {
+    *sides = (Sides *)malloc(numTriangles * sizeof(Sides));
+    if (*sides == NULL) {
+        perror("Memory allocation failed");
+        return;
+    }
+
+    for (int i = 0; i < numTriangles; i++) {
+        (*sides)[i].a = distance(triangles[i].x1, triangles[i].y1, triangles[i].x2, triangles[i].y2);
+        (*sides)[i].b = distance(triangles[i].x2, triangles[i].y2, triangles[i].x3, triangles[i].y3);
+        (*sides)[i].c = distance(triangles[i].x3, triangles[i].y3, triangles[i].x1, triangles[i].y1);
+    }
+}
+
+int areTrianglesSimilar(Sides sides1, Sides sides2) {
+    double ratio1 = sides1.a / sides2.a;
+    double ratio2 = sides1.b / sides2.b;
+    double ratio3 = sides1.c / sides2.c;
+
+    return (fabs(ratio1 - ratio2) < 1e-9 && fabs(ratio2 - ratio3) < 1e-9);
+}
+
+void outputSimilarTriangles(Triangle *triangles, int numTriangles, Sides *sides, const char *outputFilename) {
+    FILE *outputFile = fopen(outputFilename, "w");
+    if (outputFile == NULL) {
+        perror("Error opening output file");
+        return;
+    }
+
+    for (int i = 0; i < numTriangles; i++) {
+        for (int j = i + 1; j < numTriangles; j++) {
+            if (areTrianglesSimilar(sides[i], sides[j])) {
+                fprintf(outputFile, "Triangle %d: (%.2lf, %.2lf), (%.2lf, %.2lf), (%.2lf, %.2lf)\n",
+                        i + 1, triangles[i].x1, triangles[i].y1, triangles[i].x2, triangles[i].y2, triangles[i].x3, triangles[i].y3);
+                fprintf(outputFile, "Triangle %d: (%.2lf, %.2lf), (%.2lf, %.2lf), (%.2lf, %.2lf)\n\n",
+                        j + 1, triangles[j].x1, triangles[j].y1, triangles[j].x2, triangles[j].y2, triangles[j].x3, triangles[j].y3);
+            }
+        }
+    }
+    fclose(outputFile);
+}
+
+void freeMemory(Triangle *triangles, Sides *sides) {
+    if (triangles) free(triangles);
+    if (sides) free(sides);
+}
