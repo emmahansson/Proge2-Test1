@@ -1,0 +1,16 @@
+Array definition and declaration; recourse to the array(how the array can be used).
+Composing a program from external modules:
+
+Arrays in C:
+I imagine a row of labeled boxes. Each box holds something of the same type—like only numbers or only letters.
+I set the number of boxes when you create the array.
+Each box has a number (its index), starting with 0 for the first box.
+I use these numbers to put things into and take things out of the boxes.
+
+Modules in C:
+I think of modules as separate sections of your program, like chapters in a book.
+.h files are like table of contents, they tell other parts of your code what each module contains.
+.c files are like the actual pages of the chapter, they hold the actual code.
+Modules help keep my code organized and make it easier to reuse parts of my program.
+They make it easier to work on big programs.
+
